@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Page Analyzer</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            line-height: 1.6;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .nav-links {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .nav-links a {
+            margin: 0 10px;
+            color: #007bff;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+        input[type="url"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input[type="url"]:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0,123,255,.1);
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            display: none;
+        }
+        .results.show {
+            display: block;
+        }
+        .result-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .result-item strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+        .error {
+            background: #dc3545;
+            color: white;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .headings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .heading-item {
+            background: #e9ecef;
+            padding: 8px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .links-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .stat-item {
+            background: #e7f3ff;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+            border: 1px solid #b3d9ff;
+        }
+        .loading {
+            text-align: center;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Web Page Analyzer</h1>
+        
+        <div class="nav-links">
+            <a href="/api/v1/health" target="_blank">Health Check</a>
+            <a href="/api/v1/health/readiness" target="_blank">Readiness</a>
+            <a href="/api/v1/health/liveness" target="_blank">Liveness</a>
+        </div>
+        
+        <form id="analyzeForm">
+            <div class="form-group">
+                <label for="url">Enter URL to analyze:</label>
+                <input type="url" id="url" name="url" placeholder="https://example.com" required>
+            </div>
+            <button type="submit" class="btn" id="analyzeBtn">Analyze Page</button>
+        </form>
+
+        <div id="results" class="results">
+            <div id="resultsContent"></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('analyzeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const url = document.getElementById('url').value;
+            const resultsDiv = document.getElementById('results');
+            const resultsContent = document.getElementById('resultsContent');
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            
+            // Show loading state
+            analyzeBtn.disabled = true;
+            analyzeBtn.textContent = 'Analyzing...';
+            resultsContent.innerHTML = '<div class="loading">Analyzing page, please wait...</div>';
+            resultsDiv.classList.add('show');
+            
+            try {
+                const response = await fetch('/api/v1/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    resultsContent.innerHTML = '<div class="error">Error: ' + data.error + '</div>';
+                } else {
+                    displayResults(data);
+                }
+            } catch (error) {
+                resultsContent.innerHTML = '<div class="error">Network Error: ' + error.message + '</div>';
+            } finally {
+                analyzeBtn.disabled = false;
+                analyzeBtn.textContent = 'Analyze Page';
+            }
+        });
+        
+        function displayResults(data) {
+            const resultsContent = document.getElementById('resultsContent');
+            
+            let headingsHtml = '';
+            if (data.headings && Object.keys(data.headings).length > 0) {
+                headingsHtml = '<div class="headings-grid">';
+                for (const [level, count] of Object.entries(data.headings)) {
+                    headingsHtml += '<div class="heading-item">' + level.toUpperCase() + '<br><strong>' + count + '</strong></div>';
+                }
+                headingsHtml += '</div>';
+            } else {
+                headingsHtml = '<div class="stat-item">No headings found</div>';
+            }
+            
+            resultsContent.innerHTML = `
+                <div class="result-item">
+                    <strong>Analyzed URL:</strong>
+                    <a href="${data.url}" target="_blank" rel="noopener">${data.url}</a>
+                </div>
+                
+                <div class="result-item">
+                    <strong>HTML Version:</strong>
+                    ${data.html_version || 'Not detected'}
+                </div>
+                
+                <div class="result-item">
+                    <strong>Page Title:</strong>
+                    ${data.title || 'No title found'}
+                </div>
+                
+                <div class="result-item">
+                    <strong>Heading Structure:</strong>
+                    ${headingsHtml}
+                </div>
+                
+                <div class="result-item">
+                    <strong>Link Analysis:</strong>
+                    <div class="links-stats">
+                        <div class="stat-item">
+                            <strong>Internal Links</strong><br>${data.internal_links}
+                        </div>
+                        <div class="stat-item">
+                            <strong>External Links</strong><br>${data.external_links}
+                        </div>
+                        <div class="stat-item">
+                            <strong>Broken Links</strong><br>${data.inaccessible_links}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="result-item">
+                    <strong>Login Form Detected:</strong>
+                    <span style="color: ${data.has_login_form ? '#28a745' : '#6c757d'}; font-weight: 600;">
+                        ${data.has_login_form ? 'Yes' : 'No'}
+                    </span>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

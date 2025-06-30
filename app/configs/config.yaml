@@ -1,0 +1,13 @@
+port: ":8080"
+pprof_enabled: true
+pprof_port: "localhost:6060"
+log_level: "info"
+log_format: "json"
+read_timeout: "15s"
+write_timeout: "15s"
+
+analyzer:
+  max_workers: 10
+  request_timeout: "30s"
+  link_timeout: "10s"
+  max_redirects: 5
