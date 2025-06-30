@@ -5,8 +5,8 @@ import (
 	"net/http"
 )
 
-// CORS adds CORS headers
-func CORS(logger *slog.Logger) func(http.Handler) http.Handler {
+// NewCORSMiddleware middleware adds CORS headers
+func NewCORSMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Access-Control-Allow-Origin", "*")

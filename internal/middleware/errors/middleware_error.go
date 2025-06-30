@@ -1,5 +1,7 @@
 package errors
 
+import "web-analyzer/internal/errors"
+
 // MiddlewareError is the type of errors thrown by middleware.
 type MiddlewareError struct {
 	*errors.GenericError

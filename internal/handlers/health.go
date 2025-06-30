@@ -8,13 +8,12 @@ import (
 	"time"
 )
 
-// Health handles health check HTTP requests
 type Health struct {
 	startTime time.Time
 	logger    *slog.Logger
 }
 
-// NewHealth creates a new health handler
+// NewHealth func creates a new health singleton handler
 func NewHealth(logger *slog.Logger) *Health {
 	return &Health{
 		startTime: time.Now(),
@@ -56,38 +55,6 @@ func (h *Health) ServeHealth(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(health)
-}
-
-// ServeReadiness returns readiness status
-func (h *Health) ServeReadiness(w http.ResponseWriter, r *http.Request) {
-	h.logger.Debug("Readiness check requested", "remote_addr", r.RemoteAddr)
-
-	readiness := map[string]interface{}{
-		"status":    "ready",
-		"timestamp": time.Now().Format(time.RFC3339),
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(readiness)
-
-	h.logger.Debug("Readiness check completed", "remote_addr", r.RemoteAddr)
-}
-
-// ServeLiveness returns liveness status
-func (h *Health) ServeLiveness(w http.ResponseWriter, r *http.Request) {
-	h.logger.Debug("Liveness check requested", "remote_addr", r.RemoteAddr)
-
-	liveness := map[string]interface{}{
-		"status":    "alive",
-		"timestamp": time.Now().Format(time.RFC3339),
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(liveness)
-
-	h.logger.Debug("Liveness check completed", "remote_addr", r.RemoteAddr)
 }
 
 // bToMb converts bytes to megabytes

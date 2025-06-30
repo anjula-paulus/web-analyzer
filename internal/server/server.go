@@ -6,34 +6,36 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"web-analyzer/internal/config"
 	"web-analyzer/internal/handlers"
 	"web-analyzer/internal/middleware"
 )
 
-// New creates a new server instance
+// New func creates a new server singleton instance
 func New(cfg *config.Config, analyzerHandler *handlers.Analyzer, healthHandler *handlers.Health, logger *slog.Logger) *Server {
-	mux := http.NewServeMux()
+	r := http.NewServeMux()
 
 	// Register routes
-	mux.HandleFunc("/", analyzerHandler.ServeIndex)
-	mux.HandleFunc("/api/v1/analyze", analyzerHandler.ServeAnalyze)
-	mux.HandleFunc("/api/v1/health", healthHandler.ServeHealth)
-	mux.HandleFunc("/api/v1/health/readiness", healthHandler.ServeReadiness)
-	mux.HandleFunc("/api/v1/health/liveness", healthHandler.ServeLiveness)
+	r.HandleFunc("/", analyzerHandler.ServeIndex)
+	r.HandleFunc("/api/v1/analyze", analyzerHandler.ServeAnalyze)
+	r.HandleFunc("/api/v1/health", healthHandler.ServeHealth)
+	r.Handle("/metrics", promhttp.Handler())
 
 	// Serve static files if they exist
 	if _, err := http.Dir("web/static").Open("/"); err == nil {
 		fs := http.FileServer(http.Dir("web/static/"))
-		mux.Handle("/static/", http.StripPrefix("/static/", fs))
+		r.Handle("/static/", http.StripPrefix("/static/", fs))
 		logger.Info("Static file serving enabled", "path", "web/static")
 	}
 
 	// Apply middleware
-	var handler http.Handler = mux
-	handler = middleware.Recovery(logger)(handler)
-	handler = middleware.CORS(logger)(handler)
-	handler = middleware.Logger(logger)(handler)
+	var handler http.Handler = r
+	handler = middleware.NewRecoveryMiddleware(logger)(handler)
+	handler = middleware.NewCORSMiddleware(logger)(handler)
+	handler = middleware.NewLoggerMiddleware(logger)(handler)
+	handler = middleware.NewMetricsMiddleware(logger)(handler)
 
 	logger.Info("Server configured",
 		"port", cfg.Port,

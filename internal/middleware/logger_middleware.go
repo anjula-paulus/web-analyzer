@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-// Logger creates a logging middleware with structured logging
-func Logger(logger *slog.Logger) func(http.Handler) http.Handler {
+// Logger func creates a logging middleware with structured logging
+func NewLoggerMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()

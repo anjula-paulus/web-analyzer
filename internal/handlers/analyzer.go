@@ -18,9 +18,8 @@ type Analyzer struct {
 	logger   *slog.Logger
 }
 
-// NewAnalyzer creates a new analyzer handler
+// NewAnalyzer func creates a new analyzer singleton handler
 func NewAnalyzer(analyzer *analyzer.Analyzer, logger *slog.Logger) *Analyzer {
-	// Load template from file
 	tmpl := template.Must(template.ParseFiles("web/templates/index.html"))
 
 	return &Analyzer{
@@ -31,19 +30,19 @@ func NewAnalyzer(analyzer *analyzer.Analyzer, logger *slog.Logger) *Analyzer {
 }
 
 // ServeIndex renders the main page
-func (h *Analyzer) ServeIndex(w http.ResponseWriter, r *http.Request) {
+func (a *Analyzer) ServeIndex(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
-		h.logger.Debug("404 request", "path", r.URL.Path, "method", r.Method)
+		a.logger.Debug("404 request", "path", r.URL.Path, "method", r.Method)
 		http.NotFound(w, r)
 		return
 	}
 
-	h.logger.Debug("Serving index page", "remote_addr", r.RemoteAddr)
+	a.logger.Debug("Serving index page", "remote_addr", r.RemoteAddr)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	if err := h.template.Execute(w, nil); err != nil {
-		h.logger.Error("Template execution failed",
+	if err := a.template.Execute(w, nil); err != nil {
+		a.logger.Error("Template execution failed",
 			"error", err,
 			"remote_addr", r.RemoteAddr,
 		)
@@ -51,13 +50,13 @@ func (h *Analyzer) ServeIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.logger.Debug("Index page served successfully", "remote_addr", r.RemoteAddr)
+	a.logger.Debug("Index page served successfully", "remote_addr", r.RemoteAddr)
 }
 
 // ServeAnalyze handles URL analysis requests
-func (h *Analyzer) ServeAnalyze(w http.ResponseWriter, r *http.Request) {
+func (a *Analyzer) ServeAnalyze(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		h.logger.Warn("Invalid method for analyze endpoint",
+		a.logger.Warn("Invalid method for analyze endpoint",
 			"method", r.Method,
 			"remote_addr", r.RemoteAddr,
 		)
@@ -67,7 +66,7 @@ func (h *Analyzer) ServeAnalyze(w http.ResponseWriter, r *http.Request) {
 
 	var req analyzer.Request
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.logger.Warn("Invalid JSON payload",
+		a.logger.Warn("Invalid JSON payload",
 			"error", err,
 			"remote_addr", r.RemoteAddr,
 		)
@@ -76,12 +75,12 @@ func (h *Analyzer) ServeAnalyze(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.URL == "" {
-		h.logger.Warn("Empty URL in request", "remote_addr", r.RemoteAddr)
+		a.logger.Warn("Empty URL in request", "remote_addr", r.RemoteAddr)
 		writeErrorResponse(w, http.StatusBadRequest, "URL is required")
 		return
 	}
 
-	h.logger.Info("Starting URL analysis",
+	a.logger.Info("Starting URL analysis",
 		"url", req.URL,
 		"remote_addr", r.RemoteAddr,
 	)
@@ -93,9 +92,9 @@ func (h *Analyzer) ServeAnalyze(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 
 	// Perform analysis
-	result, err := h.analyzer.AnalyzeURL(ctx, req.URL)
+	result, err := a.analyzer.AnalyzeURL(ctx, req.URL)
 	if err != nil {
-		h.logger.Error("Analysis failed",
+		a.logger.Error("Analysis failed",
 			"url", req.URL,
 			"error", err,
 			"duration", time.Since(start),
@@ -107,7 +106,7 @@ func (h *Analyzer) ServeAnalyze(w http.ResponseWriter, r *http.Request) {
 			Error: err.Error(),
 		}
 	} else {
-		h.logger.Info("Analysis completed successfully",
+		a.logger.Info("Analysis completed successfully",
 			"url", req.URL,
 			"duration", time.Since(start),
 			"internal_links", result.InternalLinks,
@@ -120,7 +119,7 @@ func (h *Analyzer) ServeAnalyze(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(result); err != nil {
-		h.logger.Error("Failed to encode response",
+		a.logger.Error("Failed to encode response",
 			"error", err,
 			"url", req.URL,
 			"remote_addr", r.RemoteAddr,

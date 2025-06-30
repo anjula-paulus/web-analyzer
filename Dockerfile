@@ -13,4 +13,6 @@ WORKDIR /root/
 COPY --from=builder /app/main .
 COPY --from=builder /app/config.yaml ./config.yaml
 EXPOSE 8080
+EXPOSE 6060
+
 CMD ["./main"]

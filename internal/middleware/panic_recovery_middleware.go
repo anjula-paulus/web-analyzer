@@ -5,8 +5,8 @@ import (
 	"net/http"
 )
 
-// Recovery recovers from panics with structured logging
-func Recovery(logger *slog.Logger) func(http.Handler) http.Handler {
+// Recovery middleware recovers from panics
+func NewRecoveryMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			defer func() {

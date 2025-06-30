@@ -15,7 +15,7 @@ import (
 	"golang.org/x/net/html"
 )
 
-// New creates a new analyzer instance
+// New func creates a new analyzer singleton instance
 func New(config config.AnalyzerConfig, logger *slog.Logger) *Analyzer {
 	return &Analyzer{
 		client: &http.Client{
