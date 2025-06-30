@@ -17,7 +17,7 @@ func New(cfg *config.Config, analyzerHandler *handlers.Analyzer, healthHandler *
 
 	// Register routes
 	mux.HandleFunc("/", analyzerHandler.ServeIndex)
-	mux.HandleFunc("/api/v1//analyze", analyzerHandler.ServeAnalyze)
+	mux.HandleFunc("/api/v1/analyze", analyzerHandler.ServeAnalyze)
 	mux.HandleFunc("/api/v1/health", healthHandler.ServeHealth)
 	mux.HandleFunc("/api/v1/health/readiness", healthHandler.ServeReadiness)
 	mux.HandleFunc("/api/v1/health/liveness", healthHandler.ServeLiveness)
